@@ -76,7 +76,7 @@ def root():
 
 @app.get("/availability")
 def get_availability(
-    campgroundIds: List[str] = Query(list(CAMPGROUND_LOOKUP.keys()), alias="campgroundId"),
+    campgroundName: List[str] = Query(...),
     startDate: str = Query("2025-08-01", alias="startDate"),
     endDate: str = Query("2025-08-03", alias="endDate"),
     accept: str = Query(None, alias="accept")
@@ -92,7 +92,12 @@ def get_availability(
     results = {}
     all_sites = {}
 
-    for campgroundId in campgroundIds:
+    name_to_id = {v.lower(): k for k, v in CAMPGROUND_LOOKUP.items()}
+    for name in campgroundName:
+        campgroundId = name_to_id.get(name.lower())
+        if not campgroundId:
+            results[name] = {"error": "Unknown campground name"}
+            continue
         months = sorted(set(datetime.datetime.strptime(d.split("T")[0], "%Y-%m-%d").replace(day=1) for d in target_dates))
         all_avail_data = {}
 
